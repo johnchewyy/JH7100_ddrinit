@@ -620,6 +620,45 @@ void BootMain(void)
 	else
 		printk("End init lpddr4, test ddr fail\r\n");
 
+    uint32_t size = 0x80000;
+    uint32_t count;
+    uint32_t tmp;
+
+    //write ff...ff to ddr
+    for(int i = 0; i < size; i++)
+    {
+        writel(0xffffffff, 0x1000000000 + i *4); //*4 because write in 32-bit 4 byte ff_ff_ff_ff
+
+        if((i% (size/2)) == 0)	
+        {								
+        count++;								
+        printk("ddr write 0x%x, %dM test\n",(i * 4), count);						
+        }
+    }
+
+    // Change Trcd
+    // timing_reg->trc = 0x40;
+    // timing_reg->tras = 0x2D;
+    // timing_reg->trtp = 0x08;
+    // timing_reg->adv_al = 0x1;
+
+    // timing_reg->trcd = 0x00 -> 0x...80 (Trcd = 0) Min
+    // ...
+    // timing_reg->trcd = 0x0F -> 0x...8F (Trcd = 15)
+    // ...
+    // timing_reg->trcd = 0x1F -> 0x...9F (Trcd = 31) Max
+    apb_write(OMC_CFG0_BASE_ADDR + 0x628, 0x402d0880); 
+    apb_write(OMC_CFG1_BASE_ADDR + 0x628, 0x402d0880); 
+
+    // Read from ddr
+    for(int j = 0; j < size; j++)
+    {
+        tmp = readl(0x1000000000 + j *4);
+        if (tmp != 0xffffffff)
+            printk("%x", tmp);
+    }
+
+
 #if (UBOOT_EXEC_AT_NBDLA_2M == 1)
 	printk("init nbdla 2M ram\r\n");
 	_SET_SYSCON_REG_register16_SCFG_nbdla_clkgating_en(1);
