@@ -28,8 +28,8 @@
 #include "clkgen_ctrl_macro.h"
 #include "syscon_sysmain_ctrl_macro.h"
 #include "rstgen_ctrl_macro.h"
-
 #include "crc32.h"
+#include "dram_puf.h"
 
 extern void boot_sdio_init(void);
 extern int boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid);
@@ -620,56 +620,9 @@ void BootMain(void)
 	else
 		printk("End init lpddr4, test ddr fail\r\n");
 
-    uint32_t size = 0x1000;
-    uint32_t count;
-    uint32_t tmp;
-
-    //write ff...ff to ddr
-    for(int i = 0; i < size; i++)
-    {
-        writel(0xffffffff, 0x1000000000 + i *4); //*4 because write in 32-bit 4 byte ff_ff_ff_ff
-
-        if((i% (size/2)) == 0)	
-        {								
-        count++;								
-        printk("ddr write 0x%x, %dM test\n",(i * 4), count);						
-        }
-    }
-
-    // Change Trcd
-    // timing_reg->trc = 0x40;
-    // timing_reg->tras = 0x2D;
-    // timing_reg->trtp = 0x08;
-    // timing_reg->adv_al = 0x1;
-
-    // timing_reg->trcd = 0x00 -> 0x...80 (Trcd = 0) Min
-    // ...
-    // timing_reg->trcd = 0x0F -> 0x...8F (Trcd = 15)
-    // ...
-    // timing_reg->trcd = 0x1F -> 0x...9F (Trcd = 31) Max
-    uint32_t Trcd = 11; //default = 20, okay = 18, 15, 13, 12 
-    apb_write(OMC_CFG0_BASE_ADDR + 0x330, 0x00000000);
-    apb_write(OMC_CFG0_BASE_ADDR + 0x628, 0x402d0880 + Trcd);
-    apb_write(OMC_CFG0_BASE_ADDR + 0x330, 0x09313fff);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x330, 0x00000000);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x628, 0x402d0880 + Trcd);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x330, 0x09313fff);
-
-    // Read from ddr
-    for(int j = 0; j < size; j++)
-    {
-        tmp = readl(0x1000000000 + j *4);
-        if (tmp != 0xffffffff)
-            printk("error addr %d = 0x%x\r\n", j *4, tmp);
-    }
-
-    //Recover Trcd
-    apb_write(OMC_CFG0_BASE_ADDR + 0x330, 0x00000000);
-    apb_write(OMC_CFG0_BASE_ADDR + 0x628, 0x402d0894);
-    apb_write(OMC_CFG0_BASE_ADDR + 0x330, 0x09313fff);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x330, 0x00000000);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x628, 0x402d0894);
-    apb_write(OMC_CFG1_BASE_ADDR + 0x330, 0x09313fff);
+    //bit_selection();
+    //trcd_tuning();
+    bit_pattern_tuning();
 
 #if (UBOOT_EXEC_AT_NBDLA_2M == 1)
 	printk("init nbdla 2M ram\r\n");

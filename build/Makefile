@@ -59,6 +59,10 @@ LDFLAGS = -march=$(RISCV_ARCH) -mabi=$(RISCV_ABI)-T $(LINKER_SCRIPT) -nostartfil
 
 # object list
 OBJECTLIST=../boot/start.o \
+		../boot/bit_selection.o \
+		../boot/change_trd.o \
+		../boot/trcd_tuning.o \
+		../boot/bit_pattern_tuning.o \
 		../boot/bootmain.o \
 		../boot/trap.o \
 		../uart/uart.o \
