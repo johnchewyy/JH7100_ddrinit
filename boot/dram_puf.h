@@ -1,5 +1,6 @@
 
-
+#ifndef DRAM_PUF_H
+#define DRAM_PUF_H
 
 #include "sys.h"
 #include "spi_flash.h"
@@ -15,8 +16,10 @@
 #define SRAM_ADD 0x08000000
 #define TRCD_DEFAULT 14
 
+
 void bit_selection();
 void ChangeTrcd(uint32_t Trcd);
 void bit_pattern_tuning();
 void trcd_tuning();
 
+#endif

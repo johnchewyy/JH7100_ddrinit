@@ -1,6 +1,21 @@
 
 #include "dram_puf.h"
 
+/* Function algorithm:
+
+  1. Loop via every bit pattern define in the array
+  2. For each pattern, reduce the Trcd value from 14 -> 0
+  3. Stop the loop once the first bit flip is found
+  4. Store the Trcd value into result buffer
+  5. Display the highest Trcd value when the first bit flip occur
+
+  Purpose:
+    - find the highest value of Trcd value for every bit pattern
+
+  Assumption:
+    - temperature remain constant at every iterations
+
+ */
 void trcd_tuning() {
 
   /* Configuration */
@@ -10,7 +25,7 @@ void trcd_tuning() {
   /* Result */
   uint32_t result[5];
 
-  for(uint16_t j = 0; j < 5; j++) {
+  for(uint16_t j = 0; j < 5; j++) { //number of bit pattern = 5
 
     uint16_t trcd_reduced;
     uint16_t done_flg = false;

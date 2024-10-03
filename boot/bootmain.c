@@ -620,9 +620,10 @@ void BootMain(void)
 	else
 		printk("End init lpddr4, test ddr fail\r\n");
 
-    //bit_selection();
+
     //trcd_tuning();
     bit_pattern_tuning();
+    //bit_selection();
 
 #if (UBOOT_EXEC_AT_NBDLA_2M == 1)
 	printk("init nbdla 2M ram\r\n");

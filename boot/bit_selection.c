@@ -2,8 +2,9 @@
 
 #include "dram_puf.h"
 
+
 // Function to count set bits in an integer
-uint32_t countSetBits(uint32_t n) {
+static uint32_t countSetBits(uint32_t n) {
     uint32_t count = 0;
     while (n) {
         count += n & 1;
@@ -13,23 +14,39 @@ uint32_t countSetBits(uint32_t n) {
 }
 
 // Function to find the difference between two hex values
-uint32_t findDifference(uint32_t hex1, uint32_t hex2) {
+uint32_t getBitDifference(uint32_t hex1, uint32_t hex2) {
     if (hex1 == hex2) {
         return 0; // Values are identical, no differing bits
     }
     return countSetBits(hex1 ^ hex2);
 }
 
+/* Function algorithm:
 
+  1. Loop n times at the same memory to get the entrophy from a memory region in dram
+  2. Based on all the capture result from the same memory region, get number of bit difference between each iterations
+  3. If similarity between bit input pattern and word is lower than thershold then skip
+  4. If difference between each block word if higher than thershold then skip
+
+  Purpose:
+    - Find the word at dram that have enough differences than input pattern and minimum differences within each iteration
+
+  Assumption:
+    - Assume temperature remain constant
+
+ */
 void bit_selection() {
 
     /*configuration*/
     uint32_t size = 0x400; //4kb
-    uint32_t value = 0x0F0F0F0F;
-    uint32_t Trcd = 9; //default = 20, okay = 18, 15, 13, 12 
     uint32_t trialNum = 10; //Cache size 2MB maximum is 511 
     uint32_t maxBlkDifference = 2; //bits (maximum bit difference in the same DRAM address)
     uint32_t minDefaultDiff = 10; //bits (minimum bit difference between read value and default value)
+
+    /* fixed value according to bit_pattern_tuning and trcd_tuning */
+    uint32_t value = 0x5A5A5A5A;
+    uint32_t Trcd = 10; //default = 20, okay = 18, 15, 13, 12 
+
 
     uint32_t count;
     uint32_t tmp;
@@ -73,7 +90,7 @@ void bit_selection() {
         same = true;
         ref = readl(SRAM_ADD + i *4);
 
-        difference = findDifference(ref, value);
+        difference = getBitDifference(ref, value);
         if (difference <= minDefaultDiff) { //if too less difference
             continue;
         }
@@ -81,13 +98,13 @@ void bit_selection() {
         for(int j = 1; j < trialNum; j++) { //check the same address with other blk
            ref2 = readl((SRAM_ADD + (j*size))  + i *4);
 
-            difference = findDifference(ref2, value);
+            difference = getBitDifference(ref2, value);
             if (difference <= minDefaultDiff) { //if too less difference
                 same = false; 
                 break;
             }
 
-           difference = findDifference(ref, ref2);
+           difference = getBitDifference(ref, ref2);
            if (difference > maxBlkDifference) { //if there is difference or too much
                 //printk("addr %x: difference: %d\n", i *4, difference);
                 same = false; 

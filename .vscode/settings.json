@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "gpt.h": "c",
+    "spi_flash.h": "c"
+  }
+}
